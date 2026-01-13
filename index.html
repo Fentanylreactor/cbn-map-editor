@@ -64,14 +64,14 @@
             width: var(--tile-size-desktop);
             height: var(--tile-size-desktop);
             cursor: pointer;
-            transition: background-color 0.1s;
+            transition: none;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 10px;
             font-weight: bold;
-        }
+} 
         .tile:hover {
             opacity: 0.8;
         }
@@ -180,7 +180,15 @@
     min-height: 64px; 
     margin: 0 auto;
     overflow: hidden; /* Prevents text overlap outside the brush */
-    
+   
+   /* Add this to your <style> section */
+.tile-room-preview {
+    outline: 2px dashed #a5b4fc; /* Indigo-300 */
+    background-color: rgba(99, 102, 241, 0.4); /* Indigo-500 with opacity */
+    z-index: 25;
+}
+
+
     
     /* --- CLEAN OUTLINE METHOD --- */
             color: white !important;
@@ -198,6 +206,37 @@
             right: -10px;
             overflow: hidden;
         }
+       
+        #scroll-controls {
+        position: fixed;
+        bottom: 1rem; /* 16px */
+        right: 1rem;  /* 16px */
+        z-index: 100; /* Increased to ensure it's always on top */
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.25rem; /* 4px */
+        touch-action: none; /* Prevents browser zooming/scrolling while using the pad */
+        opacity: 0.9;
+    }
+
+    #scroll-controls button {
+        /* Ensure buttons are large enough for touch targets */
+        width: 3rem; 
+        height: 3rem;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none; /* Safari/Mobile */
+    }
+       
+      /* Room Tool Preview Style */
+.tile-room-preview {
+    outline: 3px solid #818cf8 !important; /* Bright Indigo */
+    outline-offset: -1px;
+    background-color: rgba(99, 102, 241, 0.5) !important; /* Semi-transparent Indigo */
+    z-index: 40; 
+}
+     
+     
 
         #floating-palette.collapsed #palette-inner-scroller {
             display: none;
@@ -295,17 +334,84 @@
                         Click-and-drag (or touch-and-drag) on the grid to paint.
                     </div>
                 </div>
+               
+               
+
 
                 <div class="w-full xl:w-72 flex-shrink-0 flex flex-col gap-6 p-4 bg-gray-800 rounded-xl shadow-2xl">
-                    
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="selector-mode-btn" class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold text-white shadow">
-                            Selector Tool (Off)
-                        </button>
-                        <button id="inspector-mode-btn" class="w-full py-2 bg-pink-600 hover:bg-pink-500 rounded text-xs font-bold text-white shadow">
-                            Inspector Tool (Off)
-                        </button>
-                    </div>
+                    <div id="selector-controls" class="flex gap-2 mt-2 hidden">
+    <button onclick="rotateClipboardLeft()"
+        class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs">
+        ⟲ 90°
+    </button>
+
+    <button onclick="rotateClipboardRight()"
+        class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs">
+        ⟳ 90°
+    </button>
+</div>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+    <button id="selector-mode-btn" class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold text-white shadow">
+        Selector Tool (Off)
+    </button>
+    <button id="inspector-mode-btn" class="w-full py-2 bg-pink-600 hover:bg-pink-500 rounded text-xs font-bold text-white shadow">
+        Inspector Tool (Off)
+    </button>
+</div>
+
+<button id="room-mode-btn" class="w-full py-2 mb-2 bg-indigo-600 hover:bg-indigo-500 rounded text-xs font-bold text-white shadow">
+    Room Tool (Off)
+</button>
+
+<div id="room-settings-panel" class="hidden p-3 bg-indigo-900 rounded-lg shadow-inner mb-4 border border-indigo-700">
+    <h3 class="text-xs font-bold text-indigo-200 mb-2 uppercase tracking-wider border-b border-indigo-700 pb-1">Room Configuration</h3>
+    <div class="mb-2">
+    <label class="block text-[10px] text-indigo-300 mb-1">Room Shape</label>
+    <select id="room-shape-select" class="w-full bg-indigo-800 border border-indigo-600 text-white text-xs rounded px-2 py-1">
+        <option value="rect">Rectangle (Box)</option>
+        <option value="circle">Circle (Center -> Radius)</option>
+    </select>
+</div>
+    <div class="grid grid-cols-2 gap-3 mb-2">
+        <div>
+            <label class="block text-[10px] text-indigo-300 mb-1">Wall Symbol</label>
+            <div class="flex gap-1">
+                <input type="text" id="room-wall-input" value="|" maxlength="1" 
+                    class="w-8 text-center bg-indigo-800 border border-indigo-600 text-white rounded text-xs font-mono">
+                <button id="btn-set-wall" class="flex-1 bg-gray-600 hover:bg-gray-500 text-[9px] text-white rounded px-1">
+                    Use Current
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-[10px] text-indigo-300 mb-1">Floor Symbol</label>
+            <div class="flex gap-1">
+                <input type="text" id="room-floor-input" value="." maxlength="1" 
+                    class="w-8 text-center bg-indigo-800 border border-indigo-600 text-white rounded text-xs font-mono">
+                <button id="btn-set-floor" class="flex-1 bg-gray-600 hover:bg-gray-500 text-[9px] text-white rounded px-1">
+                    Use Current
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="text-[10px] text-indigo-400 italic">
+        Drag on grid to create.
+    </div>
+</div>
+                   
+                   <div id="quick-add-panel" class="hidden mt-2 space-y-2">
+
+    <select id="quick-add-select"
+        class="w-full bg-gray-700 text-white text-sm rounded px-2 py-1">
+    </select>
+
+    <button id="quick-add-confirm"
+        class="w-full bg-blue-600 hover:bg-blue-500 text-sm rounded px-2 py-1">
+        Add
+    </button>
+
+</div>
 
                     <div class="p-3 bg-gray-700 rounded-lg shadow-inner">
                         <h3 class="text-md font-semibold mb-3 text-yellow-300 border-b border-gray-600 pb-1">Map Configuration</h3>
@@ -344,14 +450,26 @@
         </button>
     </div>
 </div>
-                        <div class="flex items-center space-x-2 mb-3">
-                            <label for="grid-rows-input" class="block text-sm font-medium text-gray-300 flex-1">Rows (Y) (Mult. of 24):</label>
-                            <label for="grid-cols-input" class="block text-sm font-medium text-gray-300 flex-1">Cols (X) (Mult. of 24):</label>
-                        </div>
-                        <div class="flex items-center space-x-2 mb-3">
-                            <input type="number" id="grid-rows-input" value="24" min="24" step="24" class="flex-1 p-2 rounded bg-gray-800 border border-gray-600 text-gray-100 focus:ring-yellow-500 focus:border-yellow-500">
-                            <input type="number" id="grid-cols-input" value="24" min="24" step="24" class="flex-1 p-2 rounded bg-gray-800 border border-gray-600 text-gray-100 focus:ring-yellow-500 focus:border-yellow-500">
-                        </div>
+                        <div class="flex flex-col space-y-2 mb-3">
+    <label class="block text-sm font-medium text-gray-300">Rows (Y) (Mult. of 24):</label>
+    <div class="flex items-center bg-gray-800 rounded border border-gray-600 overflow-hidden">
+        <button onclick="changeGridSize('grid-rows-input', -24)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold">-</button>
+        <input type="number" id="grid-rows-input" value="24" min="24" step="24" readonly 
+               class="flex-1 bg-transparent text-center text-gray-100 focus:outline-none cursor-default">
+        <button onclick="changeGridSize('grid-rows-input', 24)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold">+</button>
+    </div>
+</div>
+
+<div class="flex flex-col space-y-2 mb-3">
+    <label class="block text-sm font-medium text-gray-300">Cols (X) (Mult. of 24):</label>
+    <div class="flex items-center bg-gray-800 rounded border border-gray-600 overflow-hidden">
+        <button onclick="changeGridSize('grid-cols-input', -24)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold">-</button>
+        <input type="number" id="grid-cols-input" value="24" min="24" step="24" readonly 
+               class="flex-1 bg-transparent text-center text-gray-100 focus:outline-none cursor-default">
+        <button onclick="changeGridSize('grid-cols-input', 24)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold">+</button>
+    </div>
+</div>
+                      
                         <div class="mb-3">
                             <label for="om-terrain-input" class="block text-sm font-medium text-gray-300 mb-1">om_terrain (Group ID):</label>
                             <input type="text" id="om-terrain-input" value="hospital_grounds" class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-yellow-500 focus:border-yellow-500" placeholder="e.g., prepnet_orchard">
@@ -445,6 +563,10 @@
                 <h3 class="text-xs font-semibold text-gray-200">Brushes</h3>
                 <button id="toggle-palette-btn" class="text-sm text-gray-400 hover:text-white transition duration-150 p-1 rounded-full bg-gray-600 leading-none">&lt;</button>
             </div>
+            <div class="mb-2 px-1">
+    <input type="text" id="palette-search" placeholder="Search brushes..." 
+        class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500">
+</div>
             <div id="palette-inner-scroller" class="w-full h-full">
                 <div id="palette" class="grid"></div>
                 <input type="color" id="brush-color-picker" style="visibility:hidden; position:absolute; top:0; left:0;">
@@ -554,6 +676,7 @@
         const importPaletteBtn = document.getElementById('import-palette-btn');
         const paletteFileInput = document.getElementById('palette-file-input');
         const floatingPalette = document.getElementById('floating-palette');
+        let pendingQuickAdd = null;
         const togglePaletteBtn = document.getElementById('toggle-palette-btn');
 
         // --- Content UI Elements ---
@@ -586,12 +709,40 @@
         const specialSeeCostInput = document.getElementById('special-see-cost-input');
         const sizeExportWarning = document.getElementById('size-export-warning');
         const specialContainer = document.getElementById('special-container');
+       
+       let pendingPaint = new Set();
+let rafScheduled = false;
+
+function schedulePaint(r, c) {
+    pendingPaint.add(`${r},${c}`);
+
+    if (!rafScheduled) {
+        rafScheduled = true;
+        requestAnimationFrame(flushPaint);
+    }
+}
+
+function flushPaint() {
+    for (const key of pendingPaint) {
+        const [r, c] = key.split(',').map(Number);
+        applyBrush(r, c);
+    }
+    pendingPaint.clear();
+    rafScheduled = false;
+}
+
+
+       
+      
+      const paletteSearchInput = document.getElementById('palette-search');
         
         let mapGrid = [];
-        let tileElementGrid = []; 
+        let tileElementGrid = [];
         let activeBrushes = new Set();
         let selectedTile = DEFAULT_TILE;
         let isPainting = false;
+       
+       
         let tileDefinitions = {};
         // --- NEW: Track history of selected brushes ---
 let brushHistory = [];
@@ -603,7 +754,159 @@ let brushHistory = [];
         let brushWidth = 1;
         let brushHeight = 1;
         let lastBrushStartCoords = null; 
-        let lastPreviewTiles = [];       
+        let lastPreviewTiles = [];     
+       
+       let isRoomMode = false;
+let roomStartCoords = null;
+let roomPreviewTiles = [];
+
+const roomModeBtn = document.getElementById('room-mode-btn');
+const roomSettingsPanel = document.getElementById('room-settings-panel');
+const roomWallInput = document.getElementById('room-wall-input');
+const roomFloorInput = document.getElementById('room-floor-input');
+const btnSetWall = document.getElementById('btn-set-wall');
+const btnSetFloor = document.getElementById('btn-set-floor');
+       
+       // Add this near the top of your script variables
+const DISPLAY_NAME_OVERRIDES = {
+    "t_dirt": "Dirt Floor",
+    "f_table": "Wooden Table",
+    "f_chair": "Chair",
+    "t_wall": "Wooden Wall",
+    "t_window_domestic": "Window",
+"t_floor_olight": "Wood floor with light",
+"t_metal_floor_olight": "Metal floor with light",
+"t_concrete_wall": "Concrete Wall",
+"t_brick_wall": "Brick Wall",
+"t_wall_metal": "Metal Wall",
+"t_strconc_wall": "Reinforced Concrete Wall",
+"t_wall_glass": "Glass Wall",
+"t_reinforced_glass": "Reinforced Glass",
+"t_ballistic_glass": "Ballistic Glass",
+"t_chainfence": "Chainlink Fence",
+"t_fence_barbed": "Barbed Wire Fence",
+"t_window_bars": "Window with Bars",
+"t_column": "Column",
+"t_rock": "Solid Rock",
+"t_metal_floor": "Metal Floor",
+"t_thconc_floor_olight": "Concrete Floor with Light",
+"t_thconc_floor": "Concrete Floor",
+"t_strconc_floor": "Reinforced Conc. Floor",
+"t_pavement_y": "Yellow Pavement",
+"t_pavement": "Pavement",
+"t_linoleum_white": "White Linoleum",
+"t_door_c": "Closed Wood Door",
+"t_door_glass_c": "Closed Glass Door",
+"t_door_locked": "Locked Wood Door",
+"t_door_metal_locked": "Locked Metal Door",
+"t_chaingate_c": "Closed Chain Gate",
+"t_chaingate_l": "Locked Chain Gate",
+"t_gates_mech_control": "Mechanical Gate Controls",
+"t_stairs_up": "Stairs Up",
+"t_stairs_down": "Stairs Down",
+"t_gutter": "Gutter",
+"t_tree": "Tree",
+"t_utility_light": "Utility Light",
+"t_console": "Console",
+"t_console_broken": "Broken Console",
+"t_sewage_pipe": "Sewage Pipe",
+"t_bars": "Metal Bars",
+"t_metal_flat_roof": "Flat Metal Roof",
+"t_gas_pump": "Gas Pump",
+"t_sand": "Sand",
+"t_door_bar_locked": "Locked Door (Metal Bars)",
+"t_window_enhanced": "Armored boarded-up Window",
+"t_atm": "ATM",
+"t_door_boarded": "Boarded Door",
+"t_window_boarded": "Boarded Window",
+"t_door_metal_bulkhead_c": "Metal Bulkhead Door (closed)",
+"t_vat": "Cloning Vat",
+"t_door_metal_c_peep": "Metal Door w. Peephole",
+"t_gutter_downspout": "Gutter Downspout",
+"t_machinery_electronic": "Electronic Machinery",
+"t_lava": "Lava",
+"t_little_column": "Small Column",
+"t_metal_floor_no_roof": "Roofless Metal Floor",
+"t_secretdoor_metal_c": "Secret Metal Door",
+"t_palisade_gate": "Palisade Gate",
+"t_palisade": "Palisade",
+"t_floor_waxed": "Waxed Floor",
+"t_pillar": "Pillar",
+"t_window_reinforced_noglass": "Rein. Empty Window Frame",
+"t_shingle_flat_roof": "Flat Shingle Roof",
+"t_thatch_roof": "Thatch Roof",
+"t_window_taped": "Taped Window",
+"f_sign": "Sign",
+"f_olight_on": "Ceiling lamp (on)",
+"f_workbench": "Workbench",
+"f_drill_press": "Drill Press",
+"f_wardrobe": "Wardrobe",
+"f_hydraulic_press": "Hydraulic Press",
+"f_welderrig": "Welding Rig",
+"f_reloading_station": "Reloading Station",
+"f_grid_plut_generator": "Plutonium Generator",
+"f_solar_unit": "Solar Power Unit",
+"f_small_satelitte_dish": "Small Satellite Dish",
+"f_dumpster": "Dumpster",
+"f_cupboard": "Cupboard",
+"f_locker": "Locker",
+"f_bookcase": "Bookcase",
+"f_dresser": "Dresser",
+"f_utility_shelf": "Utility Shelf",
+"f_displaycase": "Display Case",
+"f_rack_wood": "Wooden Rack",
+"f_crate_o": "Open Crate",
+"f_crate_c": "Closed Crate",
+"f_glass_cabinet": "Glass Cabinet",
+"f_cardboard_box": "Cardboard Box",
+"f_bathtub": "Bathtub",
+"f_safe_l": "Locked Safe",
+"f_floor_lamp": "Floor Lamp",
+"f_entertainment_center": "Entertainment Center",
+"f_fireplace": "Fireplace",
+"f_filing_cabinet": "Filing Cabinet",
+"f_washer": "Washing Machine",
+"f_piano": "Piano",
+"f_deckchair": "Deck Chair",
+"f_stool": "Stool",
+"f_statue": "Statue",
+"f_dishwasher": "Dishwasher",
+"f_shower": "Shower",
+"f_toilet": "Toilet",
+"f_sink": "Sink",
+"f_fridge": "Refrigerator",
+"f_glass_fridge": "Glass Refrigerator",
+"f_oven": "Oven",
+"f_woodstove": "Wood Stove",
+"f_counter": "Counter",
+"f_punching_bag": "Punching Bag",
+"f_bed": "Bed",
+"f_bunkbed": "Bunk Bed",
+"f_autodoc": "Autodoc",
+"f_autodoc_couch": "Autodoc Couch",
+"f_treadmill": "Treadmill",
+"f_exercise": "Exercise Equipment",
+"f_table": "Wooden Table",
+"f_desk": "Desk",
+"f_chair": "Chair",
+"f_bench": "Bench",
+"f_armchair": "Armchair",
+"f_sofa": "Sofa",
+"f_trashcan": "Trash Can",
+"f_rack": "Rack",
+"f_indoor_plant": "Indoor Plant", 
+"t_sidewalk": "Sidewalk"
+    // Add as many as you want here...
+};
+
+function getFriendlyName(definitionId) {
+    // 1. Check if we have a manual override
+    if (DISPLAY_NAME_OVERRIDES[definitionId]) {
+        return DISPLAY_NAME_OVERRIDES[definitionId];
+    }
+    // 2. Fallback: Your existing "Clean up regex" logic
+    return definitionId.replace(/^(t_|f_)/, '').replace(/_/g, ' ');
+}
 
         const MASTER_TILE_DEFINITIONS = {
             '.': { color: '#4ade80', name: 'Grass', symbol: '.', text: '#14532d', definition: 't_grass' },
@@ -678,6 +981,19 @@ let brushHistory = [];
     { name: "Kitchen: Misc", group: "SUS_kitchen_misc", chance: 100, repeat: "[0,4]" },
     { name: "Kitchen: Dishes", group: "SUS_dishes", chance: 100, repeat: "[0,4]" },
     { name: "Kitchen: Spices", group: "SUS_spice_collection", chance: 100, repeat: "[0,15]" },
+    { name: "Mechanic Tools", group: "mechanics", chance: 50, repeat: "[1,3]" },
+{ name: "Home Chemistry Kit", group: "chem_home", chance: 40, repeat: "[1,2]" },
+{ name: "Fireman Cabinet", group: "fireman_cabinet", chance: 70, repeat: "[1,4]" },
+{ name: "Medicine Cabinet", group: "SUS_bathroom_medicine", chance: 65, repeat: "[1,5]" },
+{ name: "Fridge Snacks", group: "fridgesnacks", chance: 55, repeat: "[1,3]" },
+{ name: "Snacks", group: "snacks", chance: 80, repeat: "[2,5]" },
+{ name: "Oven Contents", group: "SUS_oven", chance: 30, repeat: "[1,2]" },
+{ name: "Bathroom Sink", group: "SUS_bathroom_sink", chance: 70, repeat: "[1,4]" },
+{ name: "Tailoring Fabric", group: "tailoring_fabric", chance: 45, repeat: "[2,4]" },
+{ name: "Dessert", group: "dessert", chance: 40, repeat: "[1,2]" },
+{ name: "Food in Tins", group: "foodintincan", chance: 70, repeat: "[2,4]" },
+{ name: "Condiments", group: "condiments", chance: 85, repeat: "[1,5]" },
+{ name: "Dry Goods", group: "dry_goods", chance: 75, repeat: "[2,6]" }, 
 
     // --- Tools ---
     { name: "Tools: Common", group: "tools_common", chance: 45, repeat: "[3,5]" },
@@ -726,6 +1042,11 @@ let brushHistory = [];
             if(itemSymbolInput.value === '') itemSymbolInput.value = 'i';
             updateStatus(`Loaded preset: ${data.name}. You can still edit values.`, 'text-blue-300');
         });
+       
+       
+      
+     
+     
 
 
         // --- Utility Functions ---
@@ -802,92 +1123,93 @@ let brushHistory = [];
         }
 
         function renderPalette() {
-            paletteContainer.innerHTML = '';
-            activeBrushes.clear(); 
-            const usedSymbols = new Set(mapGrid.flat());
-            const allBrushes = { ...MASTER_TILE_DEFINITIONS, ...tileDefinitions };
-            const symbolsToShow = new Set([DEFAULT_TILE, ...Object.keys(tileDefinitions), ...usedSymbols]);
+    paletteContainer.innerHTML = '';
+    const searchTerm = paletteSearchInput.value.toLowerCase();
+    activeBrushes.clear();
+
+    const usedSymbols = new Set(mapGrid.flat());
+    const allBrushes = { ...MASTER_TILE_DEFINITIONS, ...tileDefinitions };
+    const symbolsToShow = new Set([DEFAULT_TILE, ...Object.keys(tileDefinitions), ...usedSymbols]);
+
+    // 1. Sort symbols (History -> Default -> Alphabetical)
+    const sortedSymbols = [...symbolsToShow].filter(s => s !== 'UNKNOWN').sort((a, b) => {
+        const indexA = brushHistory.indexOf(a);
+        const indexB = brushHistory.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        if (a === DEFAULT_TILE) return -1;
+        if (b === DEFAULT_TILE) return 1;
+        return a.localeCompare(b);
+    });
+
+    // 2. Single Loop with Filter Logic
+    sortedSymbols.forEach(symbol => {
+        const def = allBrushes[symbol] || tileDefinitions[symbol];
+        
+        if (def && def.definition && def.definition !== 'unknown') {
+            const definitionText = def.definition.toLowerCase();
+            const symbolText = symbol.toLowerCase();
+
+            // SEARCH FILTER CHECK
+            const matchesSearch = symbolText.includes(searchTerm) || 
+                                definitionText.includes(searchTerm);
             
-            const sortedSymbols = [...symbolsToShow].filter(s => s !== 'UNKNOWN').sort((a, b) => {
-                const indexA = brushHistory.indexOf(a);
-                const indexB = brushHistory.indexOf(b);
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1) return -1;
-                if (indexB !== -1) return 1;
-                if (a === DEFAULT_TILE) return -1;
-                if (b === DEFAULT_TILE) return 1;
-                return a.localeCompare(b);
-            });
+            if (!matchesSearch) return; // Skip this brush if it doesn't match
 
-            sortedSymbols.forEach(symbol => {
-                const def = allBrushes[symbol] || tileDefinitions[symbol];
-                if (def && def.definition && def.definition !== 'unknown') {
-                    activeBrushes.add(symbol);
-                    const item = document.createElement('div');
-                    item.id = `palette-${symbol.replace(/[^a-zA-Z0-9]/g, '_')}`; 
-                    item.className = 'palette-item rounded-md text-sm font-bold shadow-md select-none'; // Added select-none
-                    item.dataset.tileKey = symbol;
-                    item.title = `${def.name} (${def.definition})\nHold to change color`; // Updated Tooltip
-                    item.style.backgroundColor = def.color;
-                    item.style.color = def.text;
-                    // Inside renderPalette sortedSymbols.forEach loop:
+            activeBrushes.add(symbol);
+            const item = document.createElement('div');
+            item.id = `palette-${symbol.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            item.className = 'palette-item rounded-md text-sm font-bold shadow-md select-none';
+            item.dataset.tileKey = symbol;
+            item.title = `${def.name || ''} (${def.definition})\nHold to change color`;
+            item.style.backgroundColor = def.color;
+            item.style.color = def.text || '#ffffff';
 
-// Locate this inside the sortedSymbols.forEach loop in renderPalette()
-item.innerHTML = `
-    <span class="font-mono text-center text-xl pointer-events-none leading-none" 
-          style="margin-bottom: 2px;">
-        ${symbol}
-    </span>
-    <span class="text-center font-bold pointer-events-none" 
-          style="font-size: 12px; /* Increased from 7px */
-                 line-height: 0.9; 
-                 max-width: 100%; 
-                 word-break: break-all; 
-                 display: -webkit-box;
-                 -webkit-line-clamp: 2; /* Allows 2 lines if name is very long */
-                 -webkit-box-orient: vertical;
-                 overflow: hidden;
-                 opacity: 0.9;">
-        ${def.definition}
-    </span>
-`;
-                    if (symbol === selectedTile) item.classList.add('selected');
+            item.innerHTML = `
+                <span class="font-mono text-center text-xl pointer-events-none leading-none" style="margin-bottom: 2px;">
+                    ${symbol}
+                </span>
+                <span class="text-center font-bold pointer-events-none" 
+                      style="font-size: 12px; line-height: 0.9; max-width: 100%; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: 0.9;">
+                    ${getFriendlyName(def.definition)}
+                </span>
+            `;
 
-                    // --- NEW LONG PRESS LOGIC START ---
-                    const startPress = (e) => {
-                        // Prevent default context menu on right click, but allow left click
-                        if (e.type === 'mousedown' && e.button !== 0) return;
-                        
-                        longPressTimer = setTimeout(() => {
-                            brushColorTargetSymbol = symbol;
-                            brushColorPicker.value = def.color; // Set picker to current color
-                            brushColorPicker.click(); // Open system picker
-                            if(navigator.vibrate) navigator.vibrate(50); // Haptic feedback
-                        }, LONG_PRESS_DURATION);
-                    };
+            if (symbol === selectedTile) item.classList.add('selected');
 
-                    const cancelPress = () => {
-                        if (longPressTimer) {
-                            clearTimeout(longPressTimer);
-                            longPressTimer = null;
-                        }
-                    };
+            // --- LONG PRESS LOGIC (Preserved) ---
+            const startPress = (e) => {
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                longPressTimer = setTimeout(() => {
+                    brushColorTargetSymbol = symbol;
+                    brushColorPicker.value = def.color;
+                    brushColorPicker.click();
+                    if(navigator.vibrate) navigator.vibrate(50);
+                }, LONG_PRESS_DURATION);
+            };
 
-                    // Desktop Events
-                    item.addEventListener('mousedown', startPress);
-                    item.addEventListener('mouseup', cancelPress);
-                    item.addEventListener('mouseleave', cancelPress);
-
-                    // Mobile Events
-                    item.addEventListener('touchstart', (e) => { startPress(e); }, {passive: true});
-                    item.addEventListener('touchend', cancelPress);
-                    item.addEventListener('touchmove', cancelPress); // Cancel if they scroll while holding
-                    // --- NEW LONG PRESS LOGIC END ---
-
-                    paletteContainer.appendChild(item);
+            const cancelPress = () => {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
                 }
-            });
+            };
+
+            item.addEventListener('mousedown', startPress);
+            item.addEventListener('mouseup', cancelPress);
+            item.addEventListener('mouseleave', cancelPress);
+            item.addEventListener('touchstart', (e) => { startPress(e); }, {passive: true});
+            item.addEventListener('touchend', cancelPress);
+            item.addEventListener('touchmove', cancelPress);
+            
+            // Standard Click to Select
+            item.addEventListener('click', () => selectBrush(symbol));
+
+            paletteContainer.appendChild(item);
         }
+    });
+}
         
         function selectTile(symbol, element) {
     // 1. Standard selection logic
@@ -950,6 +1272,10 @@ item.innerHTML = `
             addBrushSymbolInput.value = '';
             addBrushDefinitionInput.value = '';
         }
+       
+       paletteSearchInput.addEventListener('input', () => {
+    renderPalette();
+});
 
         function initializeGrid(newRows = GRID_ROWS, newCols = GRID_COLS, clearGrid = true) {
             GRID_ROWS = newRows; 
@@ -1191,6 +1517,16 @@ item.innerHTML = `
             refreshSpawnLists();
             updateStatus("Single-grid map imported successfully!", 'text-green-400');
         }
+       
+       btnSetWall.addEventListener('click', () => {
+    roomWallInput.value = selectedTile;
+    updateStatus(`Wall brush set to '${selectedTile}'`, 'text-indigo-300');
+});
+
+btnSetFloor.addEventListener('click', () => {
+    roomFloorInput.value = selectedTile;
+    updateStatus(`Floor brush set to '${selectedTile}'`, 'text-indigo-300');
+});
 
         function loadMultiChunkMapgen(mapgens) {
             let chunks = [];
@@ -1319,7 +1655,7 @@ item.innerHTML = `
              const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
              tileDefinitions[symbol] = {
                 color: randomColor, 
-                name: definition.replace(/t_|f_/, '').replace(/_/g, ' '),
+                name: getFriendlyName(definition),
                 symbol: symbol,
                 text: '#fff',
                 definition: definition
@@ -1330,6 +1666,20 @@ item.innerHTML = `
         function handlePaletteImport() {
              paletteFileInput.click();
         }
+       
+       function refreshPastePreview() {
+    // Remove old preview tiles
+    pastePreviewTiles.forEach(t => t.classList.remove('tile-paste-target'));
+    pastePreviewTiles = [];
+
+    // Force preview redraw by simulating mouse move
+    if (lastPreviewTiles && lastPreviewTiles.length) {
+        lastPreviewTiles.forEach(t => t.classList.add('tile-paste-target'));
+        pastePreviewTiles = [...lastPreviewTiles];
+    }
+}
+
+
 
         paletteFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -1406,6 +1756,30 @@ item.innerHTML = `
              const prevInspector = document.querySelectorAll('.tile-inspector');
              prevInspector.forEach(t => t.classList.remove('tile-inspector'));
         }
+       
+       let quickAddMode = null; // "monster" or "item"
+
+function openQuickAdd(type) {
+    quickAddMode = type;
+
+    const select = document.getElementById('quick-add-select');
+    select.innerHTML = "";
+
+    const presets = type === "monster"
+        ? monsterPresets
+        : itemPresets;
+
+    presets.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name || p.id;
+        select.appendChild(opt);
+    });
+
+    document.getElementById('quick-add-panel')
+        .classList.remove('hidden');
+}
+
 
         function getBrushArea(centerRow, centerCol) {
             const tiles = [];
@@ -1478,9 +1852,25 @@ item.innerHTML = `
             });
             return uniqueTiles;
         }
+       
+       
+function changeGridSize(inputId, delta) {
+    const input = document.getElementById(inputId);
+    let newValue = parseInt(input.value) + delta;
+    
+    // Ensure minimum of 24
+    if (newValue < 24) newValue = 24;
+    
+    input.value = newValue;
+
+    // Manually trigger the 'change' event so your existing 
+    // grid-resize logic knows to rebuild the canvas
+    input.dispatchEvent(new Event('change'));
+}
 
         function paintTile(r, c, symbol) {
             if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) return;
+            if (mapGrid[r][c] === symbol) return;
             const currentSymbol = mapGrid[r][c];
             if (currentSymbol === symbol) return; 
             mapGrid[r][c] = symbol;
@@ -1492,6 +1882,38 @@ item.innerHTML = `
                 tileElement.style.color = def.text;
             }
         }
+        
+function rotateGridRight(grid) {
+    const rows = grid.length;
+    const cols = grid[0].length;
+
+    const rotated = Array.from({ length: cols }, () => Array(rows));
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            rotated[c][rows - 1 - r] = grid[r][c];
+        }
+    }
+
+    return rotated;
+}
+
+function rotateGridLeft(grid) {
+    const rows = grid.length;
+    const cols = grid[0].length;
+
+    const rotated = Array.from({ length: cols }, () => Array(rows));
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            rotated[cols - 1 - c][r] = grid[r][c];
+        }
+    }
+
+    return rotated;
+}
+
+
 
         function applyBrush(r, c) {
             const tilesToPaint = getBrushArea(r, c);
@@ -1643,6 +2065,22 @@ item.innerHTML = `
                 updateStatus("Drag to select area to copy.", "text-blue-300");
             }
         }
+       
+       function handlePaint(e) {
+    // Only paint if the mouse is down (for mousemove) OR if it's a fresh click
+    if (e.type === 'mousemove' && !isPainting) return;
+
+    const tile = e.target.closest('.tile');
+    if (!tile) return;
+
+    const x = parseInt(tile.dataset.x);
+    const y = parseInt(tile.dataset.y);
+
+    // Call your optimized schedulePaint function
+    schedulePaint(x, y);
+}
+       
+       
 
         function handleSelectorMove(e) {
             const coords = getTileCoordinates(e);
@@ -1696,13 +2134,28 @@ item.innerHTML = `
                 const def = tileDefinitions[symbol] || MASTER_TILE_DEFINITIONS[symbol];
                 
                 inspectorDisplay.innerHTML = `
-                    <span class="text-yellow-300 font-bold">X: ${coords.col}, Y: ${coords.row}</span> 
-                    | Symbol: <span class="bg-gray-700 px-1 rounded">${symbol}</span> 
-                    | ${def ? def.name : 'Unknown'}
+                    <span class="text-white font-bold mr-4">Coords: ${coords.col}, ${coords.row}</span>
+                    <span class="mr-4 text-pink-200">Sym: [${symbol}] ${def ? def.name : ''}</span>
+                    
+                    <button onclick="quickAddMonster(${coords.col}, ${coords.row})" 
+                        class="bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase mx-1">
+                        + Monster Here
+                    </button>
+                    
+                    <button onclick="quickAddItem(${coords.col}, ${coords.row})" 
+                        class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase mx-1">
+                        + Item Here
+                    </button>
                 `;
                 return; // STOP PAINTING
             }
             // ----------------------------
+           
+           if (isRoomMode) {
+        e.preventDefault();
+        roomStartCoords = { r: coords.row, c: coords.col };
+        return;
+    }
 
             if (isSelectorMode) {
                 handleSelectorStart(e);
@@ -1712,37 +2165,58 @@ item.innerHTML = `
             if (e.button !== 0 && !e.touches) return;
             e.preventDefault(); 
             isPainting = true;
-            applyBrush(coords.row, coords.col);
+            schedulePaint(coords.row, coords.col);
             clearBrushPreview();
         }
 
         function handlePainting(e) {
-            // 1. PREVENT SCROLLING / NATIVE DRAG
-            // This is the missing line causing your bug!
-            if (e.cancelable) e.preventDefault(); 
+    if (e.cancelable) e.preventDefault(); 
 
-            if (isInspectorMode) return; 
-
-            if (isSelectorMode) {
-                handleSelectorMove(e);
-                return;
-            }
-            const coords = getTileCoordinates(e);
-            if (!coords) {
-                clearBrushPreview(); 
-                return;
-            }
-            if (isPainting) {
-                if (!lastBrushStartCoords || coords.row !== lastBrushStartCoords.r || coords.col !== lastBrushStartCoords.c) {
-                    applyBrush(coords.row, coords.col);
-                }
-            } else {
-                updateBrushPreview(coords.row, coords.col);
-            }
+    if (isInspectorMode) return;
+   
+    if (isRoomMode) {
+        const coords = getTileCoordinates(e);
+        if (coords && roomStartCoords) {
+            updateRoomPreview(coords.row, coords.col);
         }
+        return;
+    }
+
+    if (isSelectorMode) {
+        handleSelectorMove(e);
+        return;
+    }
+
+    const coords = getTileCoordinates(e);
+    if (!coords) {
+        clearBrushPreview(); 
+        return;
+    }
+
+    if (isPainting) {
+        // OPTIMIZATION: Use the scheduler instead of calling applyBrush immediately
+        schedulePaint(coords.row, coords.col);
+    } else {
+        updateBrushPreview(coords.row, coords.col);
+    }
+}
 
         function handlePaintEnd(e) {
             if (isInspectorMode) return;
+           
+           if (isRoomMode) {
+        if (roomStartCoords) {
+            const coords = getTileCoordinates(e);
+            // If mouseup outside grid, try to use last known valid or just cancel
+            // For simplicity, we use the coords if valid, else ignore
+            if (coords) {
+                finalizeRoom(coords.row, coords.col);
+            }
+            roomStartCoords = null;
+            clearRoomVisuals();
+        }
+        return;
+    }
 
             if (isSelectorMode) {
                 handleSelectorEnd(e);
@@ -1963,7 +2437,13 @@ item.innerHTML = `
             if (isSelectorMode) {
                 // Disable Inspector if active
                 if (isInspectorMode) inspectorModeBtn.click();
-                
+                if (isRoomMode) roomModeBtn.click(); // Turn off room mode if on
+                if (isSelectorMode) {
+    document.getElementById('selector-controls').classList.remove('hidden');
+} else {
+    document.getElementById('selector-controls').classList.add('hidden');
+}
+
                 selectorModeBtn.textContent = "Selector Tool (On)";
                 selectorModeBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-500');
                 selectorModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
@@ -1985,6 +2465,7 @@ item.innerHTML = `
             isInspectorMode = !isInspectorMode;
             if (isInspectorMode) {
                 // Disable Selector if active
+                if (isRoomMode) roomModeBtn.click(); // Turn off room mode if on
                 if (isSelectorMode) selectorModeBtn.click();
 
                 inspectorModeBtn.textContent = "Inspector Tool (On)";
@@ -2003,11 +2484,66 @@ item.innerHTML = `
             }
         });
 
-        const SCROLL_STEP = 60; 
-        document.getElementById('scroll-up-btn').addEventListener('click', () => { mainWrapper.scrollBy({ top: -SCROLL_STEP, behavior: 'smooth' }); });
-        document.getElementById('scroll-down-btn').addEventListener('click', () => { mainWrapper.scrollBy({ top: SCROLL_STEP, behavior: 'smooth' }); });
-        document.getElementById('scroll-left-btn').addEventListener('click', () => { mainWrapper.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' }); });
-        document.getElementById('scroll-right-btn').addEventListener('click', () => { mainWrapper.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' }); });
+        // --- CONTINUOUS SCROLL LOGIC ---
+let isScrolling = false;
+let scrollVector = { x: 0, y: 0 };
+const SCROLL_SPEED = 35; // ADJUST THIS FOR SPEED (Higher = Faster)
+
+function scrollLoop() {
+    if (!isScrolling) return;
+    
+    // Temporarily disable smooth behavior for instant response during hold
+    mainWrapper.style.scrollBehavior = 'auto';
+
+    if (scrollVector.x !== 0) {
+        mainWrapper.scrollLeft += scrollVector.x * SCROLL_SPEED;
+    }
+    if (scrollVector.y !== 0) {
+        mainWrapper.scrollTop += scrollVector.y * SCROLL_SPEED;
+    }
+    
+    requestAnimationFrame(scrollLoop);
+}
+
+function startScroll(x, y) {
+    scrollVector = { x, y }; // Update direction
+    if (isScrolling) return; // Prevent multiple loops from stacking
+    
+    isScrolling = true;
+    scrollLoop();
+}
+
+function stopScroll() {
+    isScrolling = false;
+    scrollVector = { x: 0, y: 0 };
+    // Restore smooth behavior for other interactions if desired
+    mainWrapper.style.scrollBehavior = 'smooth'; 
+}
+
+// Helper to attach events to buttons (Ensure this is called for all 4 buttons)
+function attachScrollEvents(btnId, x, y) {
+    const btn = document.getElementById(btnId);
+    if(!btn) return;
+
+    // Mouse
+    btn.addEventListener('mousedown', (e) => { e.preventDefault(); startScroll(x, y); });
+    window.addEventListener('mouseup', stopScroll); // Window listener is safer for releases
+
+    // Touch (Android)
+    btn.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault(); 
+        startScroll(x, y);
+    }, { passive: false });
+    
+    btn.addEventListener('touchend', stopScroll);
+    btn.addEventListener('touchcancel', stopScroll);
+}
+
+attachScrollEvents('scroll-up-btn', 0, -1);
+attachScrollEvents('scroll-down-btn', 0, 1);
+attachScrollEvents('scroll-left-btn', -1, 0);
+attachScrollEvents('scroll-right-btn', 1, 0);
+
 
         if (togglePaletteBtn && floatingPalette) {
             const togglePalette = (collapse = null) => {
@@ -2141,6 +2677,218 @@ item.innerHTML = `
                 }
             }
         });
+       
+window.quickAddMonster = function(x, y) {
+    pendingQuickAdd = { type: "monster", x, y };
+    openQuickAdd("monster");
+};
+
+
+    window.quickAddItem = function(x, y) {
+    pendingQuickAdd = { type: "item", x, y };
+    openQuickAdd("item");
+};
+
+   
+   
+document.getElementById('selector-controls').classList.remove('hidden');
+document.getElementById('selector-controls').classList.add('hidden');
+
+function rotateGridRight(grid) {
+    const rows = grid.length;
+    const cols = grid[0].length;
+    const out = Array.from({ length: cols }, () => Array(rows));
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            out[c][rows - 1 - r] = grid[r][c];
+        }
+    }
+    return out;
+}
+
+function rotateGridLeft(grid) {
+    const rows = grid.length;
+    const cols = grid[0].length;
+    const out = Array.from({ length: cols }, () => Array(rows));
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            out[cols - 1 - c][r] = grid[r][c];
+        }
+    }
+    return out;
+}
+
+roomModeBtn.addEventListener('click', () => {
+    isRoomMode = !isRoomMode;
+    
+    // Turn off other modes
+    if (isSelectorMode) selectorModeBtn.click();
+    if (isInspectorMode) inspectorModeBtn.click();
+
+    if (isRoomMode) {
+        roomModeBtn.textContent = "Room Tool (On)";
+        roomModeBtn.className = "w-full py-2 mb-2 bg-indigo-800 border border-indigo-400 rounded text-xs font-bold text-white shadow";
+        roomSettingsPanel.classList.remove('hidden');
+    } else {
+        roomModeBtn.textContent = "Room Tool (Off)";
+        roomModeBtn.className = "w-full py-2 mb-2 bg-indigo-600 hover:bg-indigo-500 rounded text-xs font-bold text-white shadow";
+        roomSettingsPanel.classList.add('hidden');
+        clearRoomVisuals();
+    }
+});
+
+function clearRoomVisuals() {
+    roomPreviewTiles.forEach(t => t.classList.remove('tile-paste-target'));
+    roomPreviewTiles = [];
+}
+
+function updateRoomPreview(endR, endC) {
+    clearRoomVisuals();
+    if (!roomStartCoords) return;
+
+    const shape = document.getElementById('room-shape-select').value;
+    
+    if (shape === 'rect') {
+        // --- RECTANGLE LOGIC (Optimized: Borders Only) ---
+        const startR = Math.min(roomStartCoords.r, endR);
+        const maxR = Math.max(roomStartCoords.r, endR);
+        const startC = Math.min(roomStartCoords.c, endC);
+        const maxC = Math.max(roomStartCoords.c, endC);
+
+        for (let r = startR; r <= maxR; r++) {
+            for (let c = startC; c <= maxC; c++) {
+                // PERFORMANCE FIX: Only highlight if it is an edge tile
+                if (r === startR || r === maxR || c === startC || c === maxC) {
+                    addRoomPreviewTile(r, c);
+                }
+            }
+        }
+    } else {
+        // --- CIRCLE LOGIC (Optimized: Outer Ring Only) ---
+        const radius = Math.sqrt(Math.pow(endR - roomStartCoords.r, 2) + Math.pow(endC - roomStartCoords.c, 2));
+        
+        // Define bounding box for loop optimization
+        const checkRange = Math.ceil(radius);
+        const startR = roomStartCoords.r - checkRange;
+        const maxR = roomStartCoords.r + checkRange;
+        const startC = roomStartCoords.c - checkRange;
+        const maxC = roomStartCoords.c + checkRange;
+
+        for (let r = startR; r <= maxR; r++) {
+            for (let c = startC; c <= maxC; c++) {
+                const dist = Math.sqrt(Math.pow(r - roomStartCoords.r, 2) + Math.pow(c - roomStartCoords.c, 2));
+                
+                // PERFORMANCE FIX: Only highlight the "Wall" area 
+                // Matches the logic in finalizeRoom: (dist > radius - 1.5)
+                if (dist <= radius && dist > radius - 1.2) {
+                    addRoomPreviewTile(r, c);
+                }
+            }
+        }
+    }
+}
+
+// Helper to keep code clean
+function addRoomPreviewTile(r, c) {
+    if (r >= 0 && r < GRID_ROWS && c >= 0 && c < GRID_COLS) {
+        const tile = tileElementGrid[r][c];
+        if (tile) {
+            tile.classList.add('tile-paste-target'); // Reuse your green selector style
+            roomPreviewTiles.push(tile);
+        }
+    }
+}
+
+function finalizeRoom(endR, endC) {
+    if (!roomStartCoords) return;
+
+    const shape = document.getElementById('room-shape-select').value;
+    const wallSym = roomWallInput.value || '#';
+    const floorSym = roomFloorInput.value || '.';
+
+    if (shape === 'rect') {
+        // --- RECTANGLE PAINT ---
+        const startR = Math.min(roomStartCoords.r, endR);
+        const maxR = Math.max(roomStartCoords.r, endR);
+        const startC = Math.min(roomStartCoords.c, endC);
+        const maxC = Math.max(roomStartCoords.c, endC);
+
+        for (let r = startR; r <= maxR; r++) {
+            for (let c = startC; c <= maxC; c++) {
+                // Border check
+                let sym = (r === startR || r === maxR || c === startC || c === maxC) ? wallSym : floorSym;
+                paintTile(r, c, sym);
+            }
+        }
+    } else {
+        // --- CIRCLE PAINT ---
+        const radius = Math.sqrt(Math.pow(endR - roomStartCoords.r, 2) + Math.pow(endC - roomStartCoords.c, 2));
+        const checkRange = Math.ceil(radius);
+        
+        for (let r = roomStartCoords.r - checkRange; r <= roomStartCoords.r + checkRange; r++) {
+            for (let c = roomStartCoords.c - checkRange; c <= roomStartCoords.c + checkRange; c++) {
+                // Distance check
+                const dist = Math.sqrt(Math.pow(r - roomStartCoords.r, 2) + Math.pow(c - roomStartCoords.c, 2));
+                
+                if (dist <= radius) {
+                    // Border check: If distance is close to the radius edge (within 1 tile), it's a wall
+                    // We use 'radius - 1.5' to make the walls roughly 1 tile thick
+                    let sym = (dist > radius - 1.2 ) ? wallSym : floorSym;
+                    paintTile(r, c, sym);
+                }
+            }
+        }
+    }
+    updateStatus("Room Created.", "text-indigo-300");
+}
+
+
+document.getElementById('quick-add-confirm')
+    .addEventListener('click', () => {
+
+        if (!pendingQuickAdd) return;
+
+        const id = document.getElementById('quick-add-select').value;
+        if (!id) return;
+
+        const { type, x, y } = pendingQuickAdd;
+
+        if (type === "monster") {
+            monsterSpawns.push({ monster: id, x, y, symbol: 'M' });
+            renderMonsterSpawnList();
+            updateStatus(`Added ${id} at ${x},${y}`, 'text-green-400');
+        } 
+        else if (type === "item") {
+            placeItemsSpawns.push({ group: id, x, y, chance: 100 });
+            renderPlaceItemsSpawnList();
+            updateStatus(`Added ${id} at ${x},${y}`, 'text-blue-400');
+        }
+
+        document.getElementById('quick-add-panel').classList.add('hidden');
+        pendingQuickAdd = null;
+    });
+
+
+function rotateClipboardLeft() {
+    if (!clipboardGrid) return;
+    clipboardGrid = rotateGridLeft(clipboardGrid);
+    refreshPastePreview();
+}
+
+function rotateClipboardRight() {
+    if (!clipboardGrid) return;
+    clipboardGrid = rotateGridRight(clipboardGrid);
+    refreshPastePreview();
+}
+
+// Add this near your other event listeners
+document.getElementById('palette-search').addEventListener('input', () => {
+    renderPalette();
+});
+
+       
     </script>
 </body>
 </html>
