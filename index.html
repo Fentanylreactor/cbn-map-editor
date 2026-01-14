@@ -348,6 +348,11 @@
         class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs">
         ⟳ 90°
     </button>
+   
+   <button onclick="exportNestedMapgen()"
+        class="px-2 py-1 bg-teal-600 hover:bg-teal-500 rounded text-xs font-bold text-white shadow ml-auto">
+        Export Selection (Nested)
+    </button>
 </div>
                     <div class="grid grid-cols-2 gap-2 mb-2">
     <button id="selector-mode-btn" class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold text-white shadow">
@@ -1060,18 +1065,7 @@ function getFriendlyName(definitionId) {
             specialContainer.style.pointerEvents = isMultiTile ? 'auto' : 'none';
         }
         
-        function checkExportSizeWarning() {
-            if (GRID_ROWS % TILE_INCREMENT !== 0 || GRID_COLS % TILE_INCREMENT !== 0) {
-                sizeExportWarning.textContent = `Warning: Size must be a multiple of ${TILE_INCREMENT}x${TILE_INCREMENT} for export.`;
-                sizeExportWarning.classList.remove('text-green-400');
-                sizeExportWarning.classList.add('text-red-400');
-            } else {
-                sizeExportWarning.textContent = `Size is valid for export.`;
-                sizeExportWarning.classList.remove('text-red-400');
-                sizeExportWarning.classList.add('text-green-400');
-            }
-            toggleSpecialSettings();
-        }
+        
 
         function parseCoordInput(input) {
             const trimmed = input.trim();
@@ -1314,7 +1308,7 @@ function getFriendlyName(definitionId) {
 
             renderPalette();
             renderGrid(); 
-            checkExportSizeWarning(); 
+            toggleSpecialSettings();
             gridRowsInput.value = GRID_ROWS;
             gridColsInput.value = GRID_COLS;
             
@@ -1322,21 +1316,7 @@ function getFriendlyName(definitionId) {
             if (selectedElement) selectTile(selectedTile, selectedElement);
         }
 
-        function enforce24Step(e) {
-            if (e.deltaY !== 0) {
-                e.preventDefault();
-                const step = TILE_INCREMENT;
-                let currentValue = parseInt(e.target.value, 10);
-                let newValue = currentValue;
-                if (e.deltaY < 0) newValue = currentValue + step;
-                else newValue = Math.max(step, currentValue - step);
-
-                if (newValue !== currentValue) {
-                    e.target.value = newValue;
-                    e.target.dispatchEvent(new Event('change'));
-                }
-            }
-        }
+        
 
         function changeGridDimensions() {
             const newRows = parseInt(gridRowsInput.value, 10);
@@ -1350,6 +1330,73 @@ function getFriendlyName(definitionId) {
             initializeGrid(newRows, newCols, false); 
             updateStatus(`Grid resized to ${newRows}x${newCols}.`, 'text-blue-300');
         }
+       
+       function exportNestedMapgen() {
+    // 1. Check if we have a selection
+    if (!clipboardGrid || clipboardGrid.length === 0) {
+        updateStatus("No selection found. Use the Selector Tool to drag and copy an area first.", "text-red-400");
+        return;
+    }
+
+    // 2. Ask for ID
+    const nestedId = prompt("Enter Nested Mapgen ID:", "my_nested_chunk");
+    if (!nestedId) return;
+
+    // 3. Analyze Data
+    const height = clipboardGrid.length;
+    const width = clipboardGrid[0].length;
+    const usedSymbols = new Set(clipboardGrid.flat());
+    
+    const terrainDefs = {};
+    const furnitureDefs = {};
+    const allBrushes = { ...MASTER_TILE_DEFINITIONS, ...tileDefinitions };
+
+    // 4. Build Definitions
+    usedSymbols.forEach(symbol => {
+        const def = allBrushes[symbol];
+        if (def && def.definition && def.definition !== 'unknown') {
+            if (def.definition.startsWith('f_')) {
+                furnitureDefs[symbol] = def.definition;
+            } else {
+                // Default to terrain if it starts with t_ or anything else
+                terrainDefs[symbol] = def.definition;
+            }
+        } else if (symbol === '.') {
+            // Handle default grass explicitly if needed, or rely on definition
+            terrainDefs['.'] = 't_grass'; 
+        }
+    });
+
+    // 5. Build Rows
+    const rows = clipboardGrid.map(row => row.join(''));
+
+    // 6. Construct JSON
+    const nestedJson = {
+        type: "mapgen",
+        method: "json",
+        nested_mapgen_id: nestedId,
+        object: {
+            mapgensize: [width, height],
+            rows: rows,
+            terrain: terrainDefs,
+            furniture: furnitureDefs
+        }
+    };
+
+    // 7. Download
+    const jsonStr = JSON.stringify(nestedJson, null, 4);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nestedId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    updateStatus(`Exported nested mapgen: ${nestedId}`, "text-green-400");
+}
 
         function generateMapJson() {
             if (GRID_ROWS % 24 !== 0 || GRID_COLS % 24 !== 0) {
@@ -1770,8 +1817,10 @@ function openQuickAdd(type) {
 
     presets.forEach(p => {
         const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.name || p.id;
+        // FIX: Items use 'group', Monsters use 'id'. Check for both.
+        const value = p.id || p.group; 
+        opt.value = value;
+        opt.textContent = p.name || value;
         select.appendChild(opt);
     });
 
@@ -2390,9 +2439,7 @@ function rotateGridLeft(grid) {
 
         gridRowsInput.addEventListener('change', changeGridDimensions);
         gridColsInput.addEventListener('change', changeGridDimensions);
-        gridRowsInput.addEventListener('wheel', enforce24Step, { passive: false });
-        gridColsInput.addEventListener('wheel', enforce24Step, { passive: false });
-
+        
         brushWidthInput.addEventListener('change', (e) => {
             brushWidth = parseInt(e.target.value, 10) || 1;
             if (brushWidth < 1) brushWidth = 1;
@@ -2850,12 +2897,14 @@ document.getElementById('quick-add-confirm')
         if (!pendingQuickAdd) return;
 
         const id = document.getElementById('quick-add-select').value;
-        if (!id) return;
+        // FIX: Ensure we don't add "undefined" items
+        if (!id || id === "undefined") return;
 
         const { type, x, y } = pendingQuickAdd;
 
         if (type === "monster") {
-            monsterSpawns.push({ monster: id, x, y, symbol: 'M' });
+            // FIX: Use 'id' instead of 'monster' so the list renderer can read it
+            monsterSpawns.push({ id: id, x, y, symbol: 'M', chance: 100 });
             renderMonsterSpawnList();
             updateStatus(`Added ${id} at ${x},${y}`, 'text-green-400');
         } 
